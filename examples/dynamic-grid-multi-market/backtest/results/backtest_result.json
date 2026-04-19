@@ -1,62 +1,62 @@
 {
   "backtest": {
-    "annual_return": -6.78,
-    "max_drawdown": 16.92,
-    "sharpe": -1.1,
-    "win_rate": 56.7,
-    "profit_loss_ratio": 0.53,
-    "total_trades": 379,
+    "annual_return": 11.99,
+    "max_drawdown": 30.47,
+    "sharpe": 0.49,
+    "win_rate": 75.2,
+    "profit_loss_ratio": 0.79,
+    "total_trades": 276,
     "initial_cash": 1000000,
-    "final_value": 864333.73,
-    "total_return": -13.57,
-    "sell_trades": 187,
-    "win_trades": 106,
-    "loss_trades": 81,
-    "first_half_return": -1.87,
-    "second_half_return": -11.92,
+    "final_value": 1330742.81,
+    "total_return": 33.07,
+    "sell_trades": 137,
+    "win_trades": 103,
+    "loss_trades": 34,
+    "first_half_return": 20.72,
+    "second_half_return": 10.24,
     "period_returns": [
-      0.0,
-      0.0,
-      0.26,
-      -0.56,
-      -0.11,
-      -0.01,
-      0.2,
+      0.14,
+      0.1,
+      0.71,
       -0.2,
-      -0.07,
-      -0.05,
-      -2.2
+      0.02,
+      1.62,
+      0.1,
+      -0.5,
+      0.0,
+      0.59,
+      0.05
     ]
   },
-  "score": 0,
+  "score": 41.6,
   "criteria": [
     {
       "metric": "年化收益率",
-      "value": "-6.78%",
+      "value": "11.99%",
       "criteria": "> 无风险利率 × 2（约3%）",
-      "passed": false
-    },
-    {
-      "metric": "最大回撤",
-      "value": "16.92%",
-      "criteria": "< 20%",
       "passed": true
     },
     {
+      "metric": "最大回撤",
+      "value": "30.47%",
+      "criteria": "< 20%",
+      "passed": false
+    },
+    {
       "metric": "夏普比率",
-      "value": "-1.10",
+      "value": "0.49",
       "criteria": "> 1.0",
       "passed": false
     },
     {
       "metric": "胜率",
-      "value": "56.70%",
+      "value": "75.20%",
       "criteria": "> 45%",
       "passed": true
     },
     {
       "metric": "盈亏比",
-      "value": "0.53",
+      "value": "0.79",
       "criteria": "> 1.5",
       "passed": false
     }
@@ -65,7 +65,7 @@
     {
       "item": "过拟合",
       "status": "✅",
-      "detail": "收益波动系数 2.6，各时期表现较稳定"
+      "detail": "收益波动系数 2.2，各时期表现较稳定"
     },
     {
       "item": "未来函数",
@@ -79,8 +79,8 @@
     },
     {
       "item": "稳定性",
-      "status": "⚠️",
-      "detail": "前后半段收益差异 84%"
+      "status": "✅",
+      "detail": "前后半段收益差异 51%"
     }
   ]
 }

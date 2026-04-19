@@ -439,7 +439,7 @@ def run_backtest(config: dict) -> dict:
 initial_cash: 1000000            # 初始资金（元）
 start_date: "2020-01-01"         # 回测开始日期
 end_date: "2025-12-31"           # 回测结束日期
-benchmark: "000300.SH"           # 基准指数代码（可选）
+benchmark: "000300.SH"           # 基准指数代码（按市场自动填入，见下方规则）
 
 # === 交易成本（run_backtest.py 直接读取） ===
 commission: 0.0003               # 佣金费率（买卖各收）
@@ -463,10 +463,21 @@ risk:
   max_drawdown_pct: 15           # 最大回撤容忍 %
 
 # === 数据源配置（strategy.py 和 fetch_data.py 读取） ===
-data_source: "akshare"           # akshare / futuapi / ftshare
+data_source: "ftshare"           # 按检测结果动态填入（见下方规则）
 symbol: "000300.SH"              # 标的代码
 data_cycle: "daily"              # daily / minute / tick
+market: "A股"                    # 目标市场（新增字段，用于选择基准和规则）
 ```
+
+**字段动态选择规则**：
+
+| 字段 | 选择逻辑 |
+|------|---------|
+| `data_source` | Step 2 检测到 ftshare-all-in-one → `"ftshare"`；检测到 futuapi → `"futuapi"`；都没有 → `"akshare"` |
+| `benchmark` | A股 → `"000300.SH"`（沪深300）；港股 → `"HSI"`（恒生指数）；美股 → `"^GSPC"`（标普500） |
+| `stamp_tax` | A股 → `0.001`；港股/美股 → `0` |
+| `commission` | 见 Step 4A 市场默认值表 |
+| `market` | 从 Step 1 确定的市场类型填入 |
 
 **字段命名规则**：
 - 固定字段（回测参数、交易成本）必须使用上述字段名，不可改名
@@ -534,7 +545,7 @@ data_cycle: "daily"              # daily / minute / tick
 
 | 指标 | 及格线 | 优秀线 | 不通过处理 |
 |------|--------|--------|-----------|
-| 年化收益率 | > 无风险利率 × 2 | > 基准指数 + 10% | 分析低收益原因 |
+| 年化收益率 | > 基准指数年均收益 × 2 | > 基准指数 + 10% | 分析低收益原因 |
 | 最大回撤 | < 20% | < 10% | 优化止损逻辑 |
 | 夏普比率 | > 1.0 | > 2.0 | 降低波动或提高收益 |
 | 胜率 | > 45% | > 55% | 调整买卖条件 |
@@ -862,7 +873,14 @@ MAX_CONSECUTIVE_FAIL = 2 # 连续N轮无有效改进时触发探索性重做
 > 将回测结果 + 复杂度映射为 0-100 分。这是 Phase 3 棘轮决策的唯一依据。
 
 ```python
-def score_strategy(backtest_result: dict, design_doc: dict) -> float:
+# 市场基准指数默认值（与 config.yaml benchmark 字段对应）
+MARKET_BENCHMARKS = {
+    "A股": {"index": "000300.SH", "avg_annual_return": 8.0},   # 沪深300 近10年均值
+    "港股": {"index": "HSI",      "avg_annual_return": 5.0},   # 恒生指数 近10年均值
+    "美股": {"index": "^GSPC",    "avg_annual_return": 10.0},  # 标普500 近10年均值
+}
+
+def score_strategy(backtest_result: dict, design_doc: dict, market: str = "A股") -> float:
     """将回测结果 + 复杂度 映射为0-100分
 
     设计原则（借鉴 autoresearch 简洁性准则）：
@@ -870,9 +888,12 @@ def score_strategy(backtest_result: dict, design_doc: dict) -> float:
     - 删条件效果不变 = 大胜利
     - 加条件只提升0.001 = 不值得
     """
+    benchmark = MARKET_BENCHMARKS.get(market, MARKET_BENCHMARKS["A股"])
+    baseline_return = benchmark["avg_annual_return"]
+
     score = 0
-    # 收益率（满分25，20%年化=满分）
-    score += min(backtest_result['annual_return'] / 20, 1.0) * 25
+    # 收益率（满分25，超越基准2倍=满分）
+    score += min(backtest_result['annual_return'] / (baseline_return * 2), 1.0) * 25
     # 回撤控制（满分20，回撤<10%=满分）
     score += max(1 - backtest_result['max_drawdown'] / 30, 0) * 20
     # 风险调整收益（满分25，夏普>2.0=满分）

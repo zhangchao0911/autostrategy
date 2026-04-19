@@ -21,7 +21,10 @@ from pathlib import Path
 
 # ── 常量 ──────────────────────────────────────────────
 
-SKILLS_DIR = Path.home() / ".claude" / "skills"
+SKILLS_DIRS = [
+    Path.home() / ".claude" / ".agents" / "skills",  # npx skills add 安装路径
+    Path.home() / ".claude" / "skills",               # 旧版路径
+]
 PYTHON = sys.executable
 
 # 各市场所需 pip 包
@@ -87,16 +90,13 @@ def check_all_packages(packages: list[str]) -> list[dict]:
 
 
 def check_skill_installed(skill_name: str) -> dict:
-    """检测 Claude Code Skill 是否已安装"""
-    # 常见 Skill 目录名映射
-    skill_dirs = {
-        "ftshare-all-in-one": SKILLS_DIR / "ftshare-all-in-one",
-        "futuapi": SKILLS_DIR / "futuapi",
-    }
-    skill_dir = skill_dirs.get(skill_name, SKILLS_DIR / skill_name)
-    skill_md = skill_dir / "SKILL.md"
-    exists = skill_md.exists()
-    return {"name": skill_name, "installed": exists, "path": str(skill_dir)}
+    """检测 Claude Code Skill 是否已安装（检查多个可能路径）"""
+    for base_dir in SKILLS_DIRS:
+        skill_dir = base_dir / skill_name
+        if (skill_dir / "SKILL.md").exists():
+            return {"name": skill_name, "installed": True, "path": str(skill_dir)}
+    # 未找到，返回第一个候选路径用于提示
+    return {"name": skill_name, "installed": False, "path": str(SKILLS_DIRS[0] / skill_name)}
 
 
 def check_opend_running() -> dict:

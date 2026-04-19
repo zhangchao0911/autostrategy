@@ -3,6 +3,38 @@
 > 本文档是策略的精确设计规格，供 AI 生成代码时读取。
 > 所有规则必须被严格翻译为代码，不可遗漏、不可简化、不可"创造性发挥"。
 
+## 0. 项目文件说明
+
+> 策略由以下文件组成，每个文件各司其职：
+
+```
+dynamic-grid-multi-market/
+  ├── STRATEGY_DESIGN.md    ← 📋 你正在看的这个文件（策略的施工图纸）
+  ├── README.md             ← 📖 策略简介（看一眼就知道这策略做什么）
+  ├── strategy.py           ← 💻 策略代码（根据本文件自动生成，不要手动改）
+  ├── config.yaml           ← ⚙️ 参数配置（想调参数？改这里，不用动代码）
+  ├── requirements.txt      ← 📦 需要安装的 Python 包
+  ├── quality_report.json   ← ✅ 代码质量检查报告
+  ├── data/
+  │   ├── fetch_data.py     ← 🔌 获取行情数据的脚本（FTShare / FutuAPI）
+  │   ├── 0700_HK.csv       ← 📊 腾讯控股 日线数据
+  │   ├── 588000_SH.csv     ← 📊 科创50ETF 日线数据
+  │   ├── 563300_SH.csv     ← 📊 中证2000ETF 日线数据
+  │   ├── 9868_HK.csv       ← 📊 小鹏汽车 日线数据
+  │   └── TSLA.csv          ← 📊 特斯拉 日线数据
+  └── backtest/
+      └── results/
+          └── backtest_result.json  ← 📈 回测结果（年化收益、回撤、夏普等）
+```
+
+**新手提示**：
+- 想了解策略逻辑 → 看 `STRATEGY_DESIGN.md`（本文件）
+- 想调整参数（如网格层数、止损比例、仓位大小）→ 改 `config.yaml`
+- 想换标的 → 同时改 `config.yaml`（symbols 部分）和 `data/fetch_data.py`（FETCH_MAP）
+- 想看回测赚了多少钱 → 看 `backtest/results/backtest_result.json`
+- 想重新获取最新数据 → 运行 `python3 data/fetch_data.py --config config.yaml --output data/`
+- `strategy.py` 是自动生成的，一般不需要手动修改
+
 ## 1. 策略元信息
 
 | 字段 | 值 |

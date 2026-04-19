@@ -117,7 +117,7 @@ def check_opend_running() -> dict:
 def check_python_version() -> dict:
     """检测 Python 版本"""
     version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    ok = sys.version_info >= (3, 10)
+    ok = sys.version_info >= (3, 9)
     return {"version": version, "ok": ok}
 
 

@@ -36,13 +36,23 @@ import numpy as np
 # ── 策略评分函数（与 SKILL.md 中的 score_strategy 一致）─────────────
 
 
-def score_strategy(backtest: dict, design: dict) -> float:
+MARKET_BENCHMARKS = {
+    "A股": {"index": "000300.SH", "avg_annual_return": 8.0},
+    "港股": {"index": "HSI",      "avg_annual_return": 5.0},
+    "美股": {"index": "^GSPC",    "avg_annual_return": 10.0},
+}
+
+
+def score_strategy(backtest: dict, design: dict, market: str = "A股") -> float:
     """将回测结果 + 复杂度映射为 0-100 分"""
+    benchmark = MARKET_BENCHMARKS.get(market, MARKET_BENCHMARKS["A股"])
+    baseline_return = benchmark["avg_annual_return"]
+
     score = 0.0
 
-    # 收益率（满分25，20%年化=满分）
+    # 收益率（满分25，超越基准2倍=满分）
     annual = backtest.get("annual_return", 0)
-    score += min(annual / 20.0, 1.0) * 25
+    score += min(annual / (baseline_return * 2), 1.0) * 25
 
     # 回撤控制（满分20，回撤<10%=满分）
     drawdown = backtest.get("max_drawdown", 100)
@@ -429,7 +439,8 @@ def main():
         sys.exit(1)
 
     # 评分
-    total_score = score_strategy(backtest, design)
+    market = config.get("market", "A股")
+    total_score = score_strategy(backtest, design, market)
 
     # 诊断
     diagnostics = run_diagnostics(backtest)
@@ -452,7 +463,7 @@ def main():
     sys.exit(0)
 
 
-def _save_json(output_path: str | None, default_dir: Path, data: dict):
+def _save_json(output_path, default_dir: Path, data: dict):
     """保存 JSON 结果，自动转换 numpy 类型"""
     def convert(obj):
         if isinstance(obj, (np.bool_,)):

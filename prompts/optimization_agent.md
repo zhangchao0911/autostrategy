@@ -39,6 +39,7 @@ git commit -m "baseline: score {baseline_score}"
 ```
 
 读取 `backtest/results/backtest_result.json` 中的 `score` 字段，确认基线分数。
+读取 `STRATEGY_DESIGN.md` 全文，作为优化期间的上下文参考（了解原始策略方向、信号逻辑、风控规则）。
 初始化 `docs/changelog.md`（如不存在，创建文件并写入标题）。
 
 ### 每轮循环（Round 1 ~ MAX_ROUNDS）
@@ -107,6 +108,7 @@ plratio_score = min(profit_loss_ratio / 2.5, 1.0) * 15
 
 - 只修改 DESIGN 文档，不碰代码文件
 - 每轮只改一个维度（保证可归因）
+- **不得偏离原始策略方向**：不可改变策略类型（如把趋势跟踪改成均值回归）、不可删除核心信号逻辑、不可放宽风控阈值
 - 记录：目标维度、方案编号、具体改动内容
 
 #### Step 4: 重新生成 strategy.py

@@ -187,21 +187,23 @@ python3 {scripts_dir}/env_setup.py
 
 ```
 [策略输出目录]/
-  ├── STRATEGY_DESIGN.md
-  ├── README.md
-  ├── strategy.py
-  ├── config.yaml
-  ├── requirements.txt
+  ├── STRATEGY_DESIGN.md    ← 📋 Phase 1 创建（设计文档，本 agent 唯一产出）
+  ├── README.md             ← 📖 Phase 2 创建（策略简介）
+  ├── strategy.py           ← 💻 Phase 2 创建（策略代码）
+  ├── config.yaml           ← ⚙️ Phase 2 创建（参数配置）
+  ├── requirements.txt      ← 📦 Phase 2 创建（Python 依赖）
   ├── data/
-  │   ├── fetch_data.py
-  │   └── .gitkeep
+  │   ├── fetch_data.py     ← 🔌 Phase 2 创建（数据获取脚本）
+  │   └── *.csv             ← 📊 Phase 2 创建（历史K线数据）
   ├── backtest/
-  │   ├── run_backtest.py
   │   └── results/
+  │       └── *.json        ← 📈 Phase 2/3 创建（回测结果）
   ├── logs/
   └── docs/
-      └── changelog.md
+      └── changelog.md      ← Phase 3 创建（优化日志）
 ```
+
+> ⚠️ **Phase 1 严格禁止**：不得在此时创建 strategy.py、config.yaml、requirements.txt、fetch_data.py 等代码文件。只创建目录结构和 STRATEGY_DESIGN.md。
 
 3. 将完整 Markdown 写入 `STRATEGY_DESIGN.md`（必须真实落盘）
 4. 运行质量检查：

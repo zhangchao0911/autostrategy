@@ -70,7 +70,7 @@ def pip_install(packages: list[str]) -> dict[str, bool]:
     return results
 
 
-IMPORT_MAP = {"futu-api": "futunn", "pyyaml": "yaml", "PyYAML": "yaml"}
+IMPORT_MAP = {"futu-api": "futunn", "pyyaml": "yaml"}
 
 
 def check_pip_package(package: str) -> dict:
@@ -148,11 +148,16 @@ def detect() -> dict:
 
 
 def install(market: str = None) -> dict:
-    """安装指定市场的依赖"""
+    """安装指定市场的依赖。market 可以是 A股/港股/美股/all。"""
     results = {"pip": {}, "skills": {}, "opend": False}
 
     # 确定 pip 包列表
-    if market and market in MARKET_PACKAGES:
+    if market == "all":
+        packages = set(COMMON_PACKAGES)
+        for pkgs in MARKET_PACKAGES.values():
+            packages.update(pkgs)
+        packages = list(packages)
+    elif market and market in MARKET_PACKAGES:
         packages = list(set(MARKET_PACKAGES[market] + COMMON_PACKAGES))
     else:
         packages = COMMON_PACKAGES
@@ -161,7 +166,16 @@ def install(market: str = None) -> dict:
     results["pip"] = pip_install(packages)
 
     # 检查是否需要安装 Skill
-    if market and market in MARKET_SKILLS:
+    if market == "all":
+        all_skills = set()
+        for skills in MARKET_SKILLS.values():
+            all_skills.update(skills)
+        for skill_name in sorted(all_skills):
+            check = check_skill_installed(skill_name)
+            if not check["installed"]:
+                print(f"\n⚠️  Skill '{skill_name}' 未安装")
+                print(f"   请在 Claude Code 中使用 /install-skill 或手动安装到: {check['path']}")
+    elif market and market in MARKET_SKILLS:
         for skill_name in MARKET_SKILLS[market]:
             check = check_skill_installed(skill_name)
             if not check["installed"]:
@@ -169,10 +183,10 @@ def install(market: str = None) -> dict:
                 print(f"   请在 Claude Code 中使用 /install-skill 或手动安装到: {check['path']}")
 
     # 检查是否需要 OpenD
-    if market in ("港股", "美股"):
+    if market == "all" or market in ("港股", "美股"):
         opend = check_opend_running()
         if not opend["running"]:
-            print(f"\n⚠️  Futu OpenD 未运行（端口 33333 无监听）")
+            print("\n⚠️  Futu OpenD 未运行（端口 33333 无监听）")
             print("   请先启动 OpenD，或在 Claude Code 中使用 /install-futu-opend")
 
     return results
@@ -232,8 +246,7 @@ def main():
     args = parser.parse_args()
 
     if args.install:
-        market = args.install if args.install != "all" else args.market
-        install(market)
+        install(args.install)
         print("\n✅ 安装完成，重新检测环境...")
         env = detect()
         print_report(env)

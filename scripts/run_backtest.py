@@ -34,6 +34,7 @@ import importlib.util
 import json
 import re
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -234,9 +235,10 @@ def _load_strategy_module(strategy_dir: Path):
     strategy_file = strategy_dir / "strategy.py"
     if not strategy_file.exists():
         return None
-    spec = importlib.util.spec_from_file_location("strategy", strategy_file)
+    module_name = f"strategy_{strategy_dir.name}_{id(strategy_file)}"
+    spec = importlib.util.spec_from_file_location(module_name, strategy_file)
     module = importlib.util.module_from_spec(spec)
-    sys.modules["strategy"] = module
+    sys.modules[module_name] = module
     try:
         spec.loader.exec_module(module)
         return module
@@ -300,7 +302,7 @@ def run_train_test_split(strategy_dir: Path, config: dict, split_ratio: float = 
         return {"error": "回测时间范围无效"}
 
     split_days = int(total_days * split_ratio)
-    split_dt = start_dt + __import__("datetime").timedelta(days=split_days)
+    split_dt = start_dt + timedelta(days=split_days)
 
     # ── 训练集回测 ──
     train_config = _deep_copy_config(config)
@@ -313,7 +315,7 @@ def run_train_test_split(strategy_dir: Path, config: dict, split_ratio: float = 
 
     # ── 测试集回测 ──
     test_config = _deep_copy_config(config)
-    test_config["start_date"] = str((split_dt + __import__("datetime").timedelta(days=1)).date())
+    test_config["start_date"] = str((split_dt + timedelta(days=1)).date())
     test_config["end_date"] = str(end_dt.date())
 
     print(f"📊 测试集回测: {test_config['start_date']} ~ {test_config['end_date']} "
@@ -538,13 +540,24 @@ def _extract_design_complexity(strategy_dir: Path) -> dict:
     )
     if signal_section:
         design["num_buy_conditions"] = _count_conditions_in_subsection(
-            signal_section, [r"条件\d+.*?(买入|BUY|开多)"]
+            signal_section, [
+                r"条件\d+.*?(买入|BUY|开多)",
+                r"^\d+\.\s+.*?(买入|BUY|开多)",
+                r"[①-⓿].*?(买入|BUY|开多)",
+            ]
         )
         design["num_sell_conditions"] = _count_conditions_in_subsection(
-            signal_section, [r"条件\d+.*?(卖出|SELL|平多|平空)"]
+            signal_section, [
+                r"条件\d+.*?(卖出|SELL|平多|平空)",
+                r"^\d+\.\s+.*?(卖出|SELL|平多|平空)",
+                r"[①-⓿].*?(卖出|SELL|平多|平空)",
+            ]
         )
         design["num_filters"] = _count_conditions_in_subsection(
-            signal_section, [r"(过滤|过滤条件)"]
+            signal_section, [
+                r"(过滤|过滤条件)",
+                r"^\d+\.\s+.*?(过滤)",
+            ]
         )
 
     # 风控规则从"风控规则"section提取
@@ -628,7 +641,6 @@ def _run_backtrader(module, config: dict, strategy_dir: Path) -> dict:
     ta = strat.analyzers.trades.get_analysis()
     total_trades = ta.get("total", {}).get("total", 0)
     won = ta.get("won", {}).get("total", 0)
-    lost = ta.get("lost", {}).get("total", 0)
     win_rate = won / max(total_trades, 1) * 100
 
     avg_win = ta.get("won", {}).get("pnl", {}).get("average", 0) or 0
@@ -853,7 +865,7 @@ def main():
     sys.exit(0)
 
 
-def _save_json(output_path, default_dir: Path, data: dict):
+def _save_json(output_path: str, default_dir: Path, data: dict):
     """保存 JSON 结果，自动转换 numpy 类型"""
     def convert(obj):
         if isinstance(obj, (np.bool_,)):

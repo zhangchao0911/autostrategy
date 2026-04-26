@@ -14,6 +14,7 @@ Autostrategy 策略文档质量检查脚本
     1 = 有检查项未通过
 """
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -150,7 +151,9 @@ def check_signal_specificity(content: str) -> tuple[bool, str]:
     # 检查是否有具体数值（百分比、数字阈值）
     has_number = bool(re.search(r"\d+\.?\d*\s*[%]?", signal_section))
     has_operator = bool(re.search(r"[><=]", signal_section))
-    has_indicator = bool(re.search(r"(RSI|MA|MACD|ATR|EMA|SMA|BOLL|KDJ|BBANDS|VWAP)", signal_section, re.IGNORECASE))
+    has_indicator = bool(re.search(
+        r"(RSI|MA|MACD|ATR|EMA|SMA|BOLL|KDJ|BBANDS|VWAP|CCI|OBV|DMI|PSY|TRIX|WILLR|ROC|MTM|BIAS|DMA|ARBR|CR|VR|WR|Williams|Stochastic|Momentum)",
+        signal_section, re.IGNORECASE))
 
     issues = []
     if not has_indicator:
@@ -323,7 +326,6 @@ def main():
     if result.get("error"):
         sys.exit(1)
     json_path = Path(filepath).parent / "quality_report.json"
-    import json
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
